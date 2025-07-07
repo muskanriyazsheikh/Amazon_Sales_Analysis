@@ -1,0 +1,13 @@
+import pandas as pd
+df = pd.read_csv('data/amazon.csv')
+# Top-rated products
+df.sort_values('rating', ascending=False).head(10)
+# Most discounted products
+df.sort_values('discount_amount', ascending=False).head(10)
+
+# Avg rating by category
+df.groupby('category')['rating'].mean().sort_values(ascending=False)
+
+# Count of products per category
+df['category'].value_counts()
+df.to_excel('data/cleaned_amazon_data.xlsx', index=False)

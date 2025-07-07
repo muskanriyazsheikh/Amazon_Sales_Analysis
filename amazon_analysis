@@ -1,0 +1,60 @@
+import pandas as pd
+
+# Load CSV
+df = pd.read_csv('Data/amazon.csv')
+
+# Clean column names
+df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
+
+# ✅ Clean 'category' column: keep only the first category
+df['category'] = df['category'].astype(str).str.split(',').str[0].str.strip()
+
+# Step 1: Keep first part before '|'
+df['category'] = df['category'].astype(str).str.split('|').str[0]
+
+# Step 2: From that, keep first part before '&'
+df['category'] = df['category'].str.split('&').str[0].str.strip()
+
+
+# Convert price columns
+df['actual_price'] = df['actual_price'].replace('[₹,]', '', regex=True)
+df['discounted_price'] = df['discounted_price'].replace('[₹,]', '', regex=True)
+df['actual_price'] = pd.to_numeric(df['actual_price'], errors='coerce')
+df['discounted_price'] = pd.to_numeric(df['discounted_price'], errors='coerce')
+
+# Create discount_amount
+df['discount_amount'] = df['actual_price'] - df['discounted_price']
+
+# Convert rating to float
+df['rating'] = pd.to_numeric(df['rating'], errors='coerce')
+
+# 🛠 Clean category column
+df['category'] = df['category'].astype(str).str.strip()
+df = df[df['category'] != '']                      # Remove empty category
+df.dropna(subset=['category'], inplace=True)       # Remove missing category
+
+# Drop missing data
+df.dropna(subset=['actual_price', 'discounted_price', 'rating'], inplace=True)
+
+# Print sample
+print(df[['product_name', 'actual_price', 'discounted_price', 'discount_amount']].head())
+
+# Top-rated
+print("\nTop-rated products:")
+print(df.sort_values('rating', ascending=False).head(10))
+
+# Most discounted
+print("\nMost discounted products:")
+print(df.sort_values('discount_amount', ascending=False).head(10))
+
+# ✅ Now this will work
+print("\nAverage rating by category:")
+print(df.groupby('category')['rating'].mean().sort_values(ascending=False))
+
+print("\nProduct count per category:")
+print(df['category'].value_counts())
+
+# Export cleaned
+df.to_excel('cleaned_amazon_data.xlsx', index=False)
+print("Excel file exported successfully ✅")
+
