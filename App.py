@@ -13,7 +13,7 @@ def load_data():
 df = load_data()
 
 # Set OpenAI key here (keep it secret)
-OPENAI_API_KEY = "your-openai-api-key"  # Replace with your actual key
+OPENAI_API_KEY = "sk-527527"  # Replace with your actual key
 llm = OpenAI(api_token=OPENAI_API_KEY)
 sdf = SmartDataframe(df, config={"llm": llm})
 
@@ -32,5 +32,6 @@ if user_input:
             st.write(response)
         except Exception as e:
             st.error(f"❌ Error: {str(e)}")
+
 
 
