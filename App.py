@@ -6,8 +6,10 @@ from pandasai.llm.openai import OpenAI
 # Load dataset
 @st.cache_data
 def load_data():
-    return pd.read_csv("Data/amazon_data.csv")
-
+    try:
+        return pd.read_csv("Data/amazon_data.csv", encoding='utf-8')
+    except UnicodeDecodeError:
+        return pd.read_csv("Data/amazon_data.csv", encoding='latin1')
 df = load_data()
 
 # Set OpenAI key here (keep it secret)
@@ -30,4 +32,5 @@ if user_input:
             st.write(response)
         except Exception as e:
             st.error(f"❌ Error: {str(e)}")
+
 
