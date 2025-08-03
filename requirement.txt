@@ -1,5 +1,4 @@
-streamlit
-pandas
-openai
-pandasai
-
+streamlit==1.47.1
+pandas==1.5.3
+openai==1.98.0
+pandasai==2.3.2
