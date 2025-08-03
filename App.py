@@ -6,7 +6,7 @@ from pandasai.llm.openai import OpenAI
 # Load dataset
 @st.cache_data
 def load_data():
-    return pd.read_csv("amazon_data.csv")
+    return pd.read_csv("Data/amazon_data.csv")
 
 df = load_data()
 
@@ -30,3 +30,4 @@ if user_input:
             st.write(response)
         except Exception as e:
             st.error(f"❌ Error: {str(e)}")
+
