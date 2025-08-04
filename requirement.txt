@@ -1,6 +1,0 @@
-streamlit
-pandas==1.5.3
-numpy==1.24.4
-openai
-pandasai==2.3.2
-contourpy==1.1.0
