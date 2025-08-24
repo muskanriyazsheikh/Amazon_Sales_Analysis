@@ -1,6 +1,5 @@
 streamlit
 pandas
 pandasai
-numpy
 openai
 
