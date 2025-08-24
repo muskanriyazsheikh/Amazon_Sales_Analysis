@@ -1,72 +1,64 @@
 import streamlit as st
-import os
 import pandas as pd
 from pandasai import SmartDataframe
-from pandasai.llm import OpenAI
+from pandasai.llm.openai import OpenAI
+import os
 
-# Set Streamlit page configuration
-st.set_page_config(page_title="🤖 AI Product Chatbot", layout="centered")
+# --- Page settings ---
+st.set_page_config(page_title="Amazon Product Chatbot", layout="centered")
+
+# --- Load CSV directly (replace with your file path) ---
+CSV_PATH = "amazon.csv"  # Change this to your dataset path
+df = pd.read_csv(CSV_PATH)
+
+# --- Initialize PandasAI ---
+os.environ["OPENAI_API_KEY"] = "sk-proj-...."
+llm = OpenAI(api_token=os.getenv("OPENAI_API_KEY"))
+sdf = SmartDataframe(df, config={"llm": llm})
+
+# --- Pre-calculated values ---
+avg_rating = df["Rating"].mean().round(2)
+avg_rating_per_cat = df.groupby("Category")["Rating"].mean().round(2).to_dict()
+avg_rating_per_cat_str = ", ".join([f"{cat} - {rating}" for cat, rating in avg_rating_per_cat.items()])
+
+price_vs_rating = df.groupby("Actual Price")["Rating"].mean().round(2).to_dict()
+price_vs_rating_str = ", ".join([f"₹{price} → {rating}★" for price, rating in price_vs_rating.items()])
+
+# --- Predefined responses ---
+responses = {
+    "top rated product": "🔥 Fire-Boltt Ninja is the top-rated product with a 4.9 rating.",
+    "highest rating": "🔥 Fire-Boltt Ninja is the top-rated product with a 4.9 rating.",
+    "most discount": "💸 Fire-Boltt Ninja has the highest discount among all products.",
+    "discount": "💸 Fire-Boltt Ninja has the highest discount among all products.",
+    "average rating": f"⭐ The average product rating is {avg_rating}.",
+    "rating per category": f"📊 Average rating per category: {avg_rating_per_cat_str}",
+    "actual price vs rating": f"💰 Price vs Rating: {price_vs_rating_str}",
+    "total price": f"💰 The total price of all products combined is ₹{df['Actual Price'].sum():,.0f}.",
+    "category": "📦 Electronics and Home are the most common product categories.",
+    "categories": "📦 Electronics and Home are the most common product categories.",
+    "top categories": "📦 Electronics and Home are the most common product categories.",
+    "how many products": f"📊 There are {len(df)} products in the dataset."
+}
+
+# --- UI ---
 st.title("🤖 Amazon Product Chatbot")
-st.markdown("Ask me anything about your product data 👇")
+st.write("Hi! Ask me anything about Amazon product insights:")
 
-# --- Function to load the dataset ---
-# Using Streamlit's cache to prevent reloading the data on every rerun
-@st.cache_data
-def load_data():
-    """Loads the Amazon product data from a CSV file."""
-    try:
-        # Assumes the CSV is named 'amazon.csv' and is in the same directory
-        return pd.read_csv("amazon.csv", encoding='utf-8')
-    except UnicodeDecodeError:
-        # Fallback for different encodings
-        return pd.read_csv("amazon.csv", encoding='latin1')
-    except FileNotFoundError:
-        st.error("Error: 'amazon.csv' not found. Please ensure the file is in the same directory.")
-        st.stop()
+query = st.text_input("You:", "")
 
-# Load the dataframe
-df = load_data()
+if query:
+    cleaned_query = query.lower().strip().replace("-", "").replace("?", "")
+    matched = False
 
-# --- API Key Setup ---
-# Use Streamlit's secrets management for secure API key storage
-try:
-    OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
-    st.success("🔐 API key loaded: `True`")
-    
-    # Initialize the LLM with the API key
-    llm = OpenAI(api_token=OPENAI_API_KEY)
-    
-    # Create the SmartDataframe instance
-    sdf = SmartDataframe(df, config={"llm": llm})
-except KeyError:
-    st.error("❌ `OPENAI_API_KEY` not found in Streamlit secrets.")
-    st.info("Please add your OpenAI API key to the `secrets.toml` file in your `.streamlit` folder.")
-    st.stop()
-except Exception as e:
-    st.error(f"❌ Could not initialize LLM. Error: {e}")
-    st.stop()
+    for key in responses:
+        if key in cleaned_query:
+            st.success(responses[key])
+            matched = True
+            break
 
-# --- Chatbot UI and Logic ---
-# Get user input from a text box
-user_input = st.text_input("You:", "")
-
-if user_input:
-    # Display a spinner while the LLM is thinking
-    with st.spinner("Thinking..."):
+    if not matched:
         try:
-            # Use the SmartDataframe's chat method to get a response
-            response = sdf.chat(user_input)
-            
-            # Display the chatbot's answer
-            st.markdown("---")
-            st.markdown("**Answer:**")
-            st.write(response)
+            answer = sdf.chat(query)
+            st.info(answer)
         except Exception as e:
-            # Handle any errors during the chat interaction
-            st.error(f"❌ Error during chat: {str(e)}")
-
-# --- Display the dataframe at the bottom for context ---
-st.markdown("---")
-st.subheader("Your Amazon Product Data")
-st.dataframe(df)
-
+            st.error(f"Error: {str(e)}")
